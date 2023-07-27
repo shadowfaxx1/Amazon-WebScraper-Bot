@@ -47,3 +47,7 @@ To run the Amazon Product Information Bot, you need the following:
 2. The bot may not work correctly if the Amazon website structure changes. In such cases, you may need to update the XPath or CSS selector in the methods.
 
 Use the Amazon Product Information Bot to efficiently retrieve and track product details for your company's products on Amazon!
+
+## Result 
+![Image](https://github.com/shadowfaxx1/fictional-adventure/blob/6da15365106d81aabc36f7a93ebe9da58d94c862/scraper/image.png)
+
