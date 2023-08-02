@@ -12,7 +12,7 @@ import time
 from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException
 from prettytable import PrettyTable 
 from scraper.constants import url 
-from scraper.constants import link_list,price_list,initializer
+from scraper.constants import link_list,price_list
 
 import os
 from selenium import webdriver
@@ -20,6 +20,7 @@ import os
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 class amazon(webdriver.Chrome):
+
     def __init__(self, driver_path=r"C:\Users\kaifk\lpth\selenium", teardown=False, headless=True) -> None:
         self.driver_path = driver_path
         self.teardown = teardown
@@ -34,31 +35,41 @@ class amazon(webdriver.Chrome):
         # Use the 'options' argument instead of 'chrome_options'
         os.environ['PATH'] += os.pathsep + self.driver_path
         super(amazon, self).__init__(options=chrome_options)
-        self.implicitly_wait(10)
+        self.implicitly_wait(3)
         self.maximize_window()
 
     def search_items(self):
         j = 0
         all_items_info = []
-        for i in link_list:
-            item_info = self.search_url(i, price_list[j])
-            all_items_info.append(item_info)
+        for i, item_link in enumerate(link_list):
+            flag = self.perform_search(item_link)
+            if not flag:
+                print(f"Skipping ASIN: {item_link}")
+                all_items_info.append([None] * 5)  # Append a list of None for skipped ASINs
+                continue
+
+            item_info = self.search_url(item_link, price_list[j])
+            if item_info is None:
+                print(f"Error while processing ASIN: {item_link}")
+                all_items_info.append([None] * 5)  # Append a list of None for erroneous ASINs
+            else:
+                all_items_info.append(item_info)
             j += 1
-            self.refresh()
-            if j == 1:
-                break
 
         return all_items_info
+
+
+
 
     def search_url(self, item_link, expected_price):
         
         flag=self.perform_search(item_link)
-        time.sleep(0.2)
         if(flag==0):
              return ["None","None","None","None",None]
-            
+        time.sleep(0.2)
         price = self.get_item_price()
-        print(price)
+        print(item_link)
+        time.sleep(0.1)
         merchant_info = self.get_merchant_info()
         print(merchant_info)
 
@@ -73,35 +84,43 @@ class amazon(webdriver.Chrome):
         Et_mop = "yes" if (price) == (expected_price) else "No"
         bb_seller_p = None if price == expected_price else price
         bb_seller_name = merchant_info
+      
 
         return [Et_live, Et_mop, bb_seller_p, bb_seller_name, price_ET]
     
 
     def perform_search(self, item_link):
-        search_bar=self.get(f"https://www.amazon.in/d/{item_link}")
-        time.sleep(0.5)
-        if(self.is_present() ==0):
-               return 0
+        try:
+            self.get(f"https://www.amazon.in/d/{B0148NMVX}")
+            time.sleep(0.5)
+            if not self.is_present():
+                return False
+        except Exception as e:
+            print(f"Error while searching for ASIN: {item_link}")
+            return False
+
+        return True
+
 
     
     def get_item_price(self):
-            
-        
+        try:
+            price_element = WebDriverWait(self, 10).until(
+                ec.visibility_of_element_located((By.XPATH, '//span[@class="a-price-whole"]'))
+            )
+            price = price_element.text
+        except NoSuchElementException:
             try:
                 price_element = WebDriverWait(self, 10).until(
-                    ec.visibility_of_element_located((By.XPATH, '//span[@class="a-price-whole"]'))
-                )
-                price=price_element.text
-            except Exception as NoSuchElementException:
-                 price_element = WebDriverWait(self, 10).until(
                     ec.visibility_of_element_located((By.XPATH, '//span[@data-a-size="xl" and @data-a-color="base"]'))
                 )
-                 price=price_element.text
-            
+                price = price_element.text
             except Exception as e:
-                 price = "0"
+                print("Error while getting the item price.")
+                price = "None"
 
-            return price
+        return price
+
     
     def is_present(self):
         try:
@@ -134,7 +153,7 @@ class amazon(webdriver.Chrome):
                 if merchant_name == "ETrade Online":
                     price_element_ET = offer_div.find_element(By.CSS_SELECTOR, 'span.a-size-medium.a-color-price')
                     price_ET = price_element_ET.text.strip()
-                    return price_ET
-                
-
+                    return price_ET                
             return None
+
+
