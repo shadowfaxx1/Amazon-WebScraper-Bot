@@ -55,7 +55,6 @@ class amazon(webdriver.Chrome):
             else:
                 all_items_info.append(item_info)
             j += 1
-
         return all_items_info
 
 
@@ -91,7 +90,7 @@ class amazon(webdriver.Chrome):
 
     def perform_search(self, item_link):
         try:
-            self.get(f"https://www.amazon.in/d/{B0148NMVX}")
+            self.get(f"https://www.amazon.in/d/{item_link}")
             time.sleep(0.5)
             if not self.is_present():
                 return False
@@ -133,6 +132,15 @@ class amazon(webdriver.Chrome):
             return 0
         except NoSuchElementException:
             pass
+        try:
+            element = self.find_element_by_xpath("//b[@class='h1']")
+            element_text = element.text
+            search_text = "Looking for something?"
+            if search_text in element_text:
+                return 0
+        except NoSuchElementException:
+            pass
+
 
         return 1
              
