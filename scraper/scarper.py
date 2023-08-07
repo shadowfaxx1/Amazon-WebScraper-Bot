@@ -20,6 +20,7 @@ import os
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 class amazon(webdriver.Chrome):
+
     def __init__(self, driver_path=r"C:\Users\kaifk\lpth\selenium", teardown=False, headless=True) -> None:
         self.driver_path = driver_path
         self.teardown = teardown
@@ -40,14 +41,12 @@ class amazon(webdriver.Chrome):
     def search_items(self):
         j = 0
         all_items_info = []
-        for i in link_list:
-            item_info = self.search_url(i, price_list[j])
-            all_items_info.append(item_info)
-            if(j==10):
-                 break
-            
+
             j += 1
         return all_items_info
+
+
+
 
     def search_url(self, item_link, expected_price):
         
@@ -78,30 +77,37 @@ class amazon(webdriver.Chrome):
     
 
     def perform_search(self, item_link):
-        search_bar=self.get(f"https://www.amazon.in/d/{item_link}")
-        time.sleep(0.5)
-        if(self.is_present() ==0):
-               return 0
+        try:
+            self.get(f"https://www.amazon.in/d/{item_link}")
+            time.sleep(0.5)
+            if not self.is_present():
+                return False
+        except Exception as e:
+            print(f"Error while searching for ASIN: {item_link}")
+            return False
+
+        return True
+
 
     
     def get_item_price(self):
-            
-        
+        try:
+            price_element = WebDriverWait(self, 10).until(
+                ec.visibility_of_element_located((By.XPATH, '//span[@class="a-price-whole"]'))
+            )
+            price = price_element.text
+        except NoSuchElementException:
             try:
                 price_element = WebDriverWait(self, 10).until(
-                    ec.visibility_of_element_located((By.XPATH, '//span[@class="a-price-whole"]'))
-                )
-                price=price_element.text
-            except Exception as NoSuchElementException:
-                 price_element = WebDriverWait(self, 10).until(
                     ec.visibility_of_element_located((By.XPATH, '//span[@data-a-size="xl" and @data-a-color="base"]'))
                 )
-                 price=price_element.text
-            
+                price = price_element.text
             except Exception as e:
-                 price = "0"
+                print("Error while getting the item price.")
+                price = "None"
 
-            return price
+        return price
+
     
     def is_present(self):
         try:
@@ -114,6 +120,15 @@ class amazon(webdriver.Chrome):
             return 0
         except NoSuchElementException:
             pass
+        try:
+            element = self.find_element_by_xpath("//b[@class='h1']")
+            element_text = element.text
+            search_text = "Looking for something?"
+            if search_text in element_text:
+                return 0
+        except NoSuchElementException:
+            pass
+
 
         return 1
              
