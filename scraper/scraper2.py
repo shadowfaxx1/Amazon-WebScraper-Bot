@@ -42,8 +42,6 @@ class amazon(webdriver.Chrome):
         for i in link_list:
             item_info = self.search_url(i, price_list[j])
             all_items_info.append(item_info)
-            if(j==2):
-                 break
             j += 1
         return all_items_info
 
@@ -77,11 +75,10 @@ class amazon(webdriver.Chrome):
 
     def perform_search(self, item_link):
         try:
-            search_bar = self.get(f"https://www.amazon.in/d/{'B0BT1ZZ7W'}")
+            search_bar = self.get(f"https://www.amazon.in/d/{item_link}")
             time.sleep(0.5)
             if self.is_present() == 0:
                 return 0
-            # ... Rest of the code ...
         except Exception as e:
             print("An error occurred:", str(e))
             return 0  # Return 0 to indicate error
