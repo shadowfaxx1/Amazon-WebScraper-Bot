@@ -41,7 +41,25 @@ class amazon(webdriver.Chrome):
     def search_items(self):
         j = 0
         all_items_info = []
+        for i in link_list:
+            item_info = self.search_url(i, price_list[j])
+            all_items_info.append(item_info)
+            if(j==10):
+                 break
+            
+        for i, item_link in enumerate(link_list):
+            flag = self.perform_search(item_link)
+            if not flag:
+                print(f"Skipping ASIN: {item_link}")
+                all_items_info.append([None] * 5)  # Append a list of None for skipped ASINs
+                continue
 
+            item_info = self.search_url(item_link, price_list[j])
+            if item_info is None:
+                print(f"Error while processing ASIN: {item_link}")
+                all_items_info.append([None] * 5)  # Append a list of None for erroneous ASINs
+            else:
+                all_items_info.append(item_info)
             j += 1
         return all_items_info
 
